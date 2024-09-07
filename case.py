@@ -633,14 +633,49 @@ for col in fluxo[colunas_float].columns:
 fluxo.to_parquet('databases/fluxo_completo.parquet')
 
 
-###############################################
-#  BANCOS DE DADOS PRONTOS, CÁLCULO DO IDESP  #
-###############################################
+################################################################################
+#                   BANCOS DE DADOS PRONTOS, CÁLCULO DO IDESP                  #
+#                                                                              #
+#                      Referência: 'Nota tecnica_2019.pdf'                     #
+# Disponível em                                                                #
+# https://dados.educacao.sp.gov.br/sites/default/files/Nota%20tecnica_2019.pdf #
+# Acesso em 05/09/2024.                                                        #
+################################################################################
 
 # Se necessário, carrega os bancos de dados já trabalhados anteriormente:
 alunos = pd.read_parquet('databases/alunos_completo.parquet')
 fluxo = pd.read_parquet('databases/fluxo_completo.parquet')
 
+# Cálculo do IDESP de cada série (5o EF, 9o EF, 3o EM) dá-se por...
+idesp = indicador_desempenho * indicador_fluxo
 
+# ...onde...
+indicador_desempenho = (1 - defasagem/3)*10
+
+# ...e tendo...
+defasagem = 3*abaixo_basico + 2*basico + adequado
+
+# ...sendo que cada definição (básico, abaixo, adequado) é calculada por
+abaixo_basico = alunos_abaixo_basico/total_alunos
+basico = alunos_basico/total_alunos
+adequado = alunos_adequado/total_alunos
+
+# Para o cálculo do IDESP utiliza-se o ID da escola em cada etapa da
+# escolarização, sendo
+id_escola = (nota_portugues + nota_matemática)/2
+
+# Finalmente, o indicador de fluxo é tido como
+indicador_fluxo = alunos_aprovados / alunos_matriculados
+
+#############################################
+# Então eu tenho que fazer o IDESP para cada um dos anos (2017-2022)
+# se pá dá pra ajeitar uma função pra isso
+
+alunos.groupby(['Ano', 'CD_ESCOLA', 'SERIE']).RENDIMENTO.mean()
+alunos
+teste = pd.merge([alunos, fluxo]]
+
+
+#
 # Gráfico do histórico das proficiências de cada cidade ao longo do tempo
 # Registrar nível de desempenho
