@@ -255,8 +255,6 @@ fluxo = pd.read_csv('databases/fluxo_completo.csv')
 saresp = pd.read_csv('databases/saresp_completo.csv')
 """
 
-alunos = pd.read_parquet('databases/alunos_completo.parquet')
-
 ##############################################
 # MANIPULAÇÃO DOS BANCOS DE DADOS DOS ALUNOS #
 ##############################################
@@ -479,29 +477,169 @@ alunos = pd.concat([alunos_2017, alunos_2018, alunos_2019,
 # Salvando o banco de dados agrupado para utilização futura
 alunos.to_parquet('databases/alunos_completo.parquet')
 
-# Se necessário, carrega o banco de dados agrupado (descomentar a linha abaixo)
-#alunos = pd.read_parquet('databases/alunos_completo.parquet')
 
 ##############################################
 #  MANIPULAÇÃO DOS BANCOS DE DADOS DE FLUXO  #
 ##############################################
 # CD_TP_IDENTIFICADOR: 8 é escola estadual
 
-colunas = ['Ano', 'NM_MUNICIPIO', 'CD_ESCOLA']
-
+###
+# Fluxo de 2017
+###
+# Carrega o dataset
 fluxo_2017 = pd.read_csv('databases/fluxo_2017.csv')
 
-fluxo_2017.info()
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA']
+colunas = list(fluxo_2017.columns[fluxo_2017.columns.isin(colunas_nao) == False])
 
-fluxo_2017['CD_TP_IDENTIFICADOR'].value_counts()
-fluxo_2017['CD_ESCOLA'].value_counts()
+# Filtra para o df final e verifica valores NaN
+fluxo_2017 = fluxo_2017[colunas]
+fluxo_2017.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2017.to_parquet('databases/fluxo_2017.parquet')  # salva o dataset em arquivo
 
-fluxo_2017.groupby(['CD_TP_IDENTIFICADOR', 'NM_COMPLETO_ESCOLA'])['CD_ESCOLA'].value_counts().head(60)
 
-#
-#
-#
-#
+###
+# Fluxo de 2018
+###
+# Carrega o dataset
+fluxo_2018 = pd.read_csv('databases/fluxo_2018.csv', sep=';')
+
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA']
+colunas = list(fluxo_2018.columns[fluxo_2018.columns.isin(colunas_nao) == False])
+
+# Filtra para o df final e verifica valores NaN
+fluxo_2018 = fluxo_2018[colunas]
+fluxo_2018.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2018 = fluxo_2018.rename(columns={'ANO': 'Ano'})  # transforma o nome da feature 'ANO' igual ao padrão de 2017 ('Ano')
+fluxo_2018.to_parquet('databases/fluxo_2018.parquet')  # salva o dataset em arquivo
+
+
+###
+# Fluxo de 2019
+###
+# Carrega o dataset
+fluxo_2019 = pd.read_csv('databases/fluxo_2019.csv')
+
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA']
+colunas = list(fluxo_2019.columns[fluxo_2019.columns.isin(colunas_nao) == False])
+
+# Filtra para o df final e verifica valores NaN
+fluxo_2019 = fluxo_2019[colunas]
+fluxo_2019.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2019 = fluxo_2019.rename(columns={'ANO': 'Ano'})  # transforma o nome da feature 'ANO' igual ao padrão de 2017 ('Ano')
+fluxo_2019.to_parquet('databases/fluxo_2019.parquet')  # salva o dataset em arquivo
+
+
+###
+# Fluxo de 2020
+###
+# Carrega o dataset
+fluxo_2020 = pd.read_csv('databases/fluxo_2020.csv')
+
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA']
+colunas = list(fluxo_2020.columns[fluxo_2020.columns.isin(colunas_nao) == False])
+
+# Filtra para o df final e verifica valores NaN
+fluxo_2020 = fluxo_2020[colunas]
+fluxo_2020.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2020 = fluxo_2020.rename(columns={'ANO_LETIVO': 'Ano'})  # transforma o nome da feature 'ANO_LETIVO' igual ao padrão de 2017 ('Ano')
+fluxo_2020.to_parquet('databases/fluxo_2020.parquet')  # salva o dataset em arquivo
+
+
+###
+# Fluxo de 2021
+###
+# Carrega o dataset. Obs.: o arquivo original do download
+# resulta em erro na hora de carregar. Abre o arquivo com aplicativo
+# de planilhas (Excel, Libreoffice Calc, etc.) e salva novamente como CSV
+# sem precisar alterar nada, só abrir e salvar: ajusta o erro automaticamente.
+fluxo_2021 = pd.read_csv('databases/fluxo_2021.csv')
+
+# O arquivo de 2021 possui alguns registros incongruentes com os demais
+# datasets, o código abaixo limpa essas features indevidas
+fluxo_2021 = fluxo_2021[fluxo_2021.columns.drop(list(fluxo_2021.filter(regex='Unnamed')))]
+
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA']
+colunas = list(fluxo_2021.columns[fluxo_2021.columns.isin(colunas_nao) == False])
+
+# O banco de dados de 2021 possui uma ocorrência de código identificador
+# errado, dropando aqui:
+indevido = fluxo_2021[fluxo_2021['CD_TP_IDENTIFICADOR'] == ' PROF'].index
+fluxo_2021 = fluxo_2021.drop(indevido)
+
+# Filtra para o df final e verifica valores NaN
+fluxo_2021 = fluxo_2021[colunas]
+fluxo_2021.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2021 = fluxo_2021.rename(columns={'ANO_LETIVO': 'Ano'})  # transforma o nome da feature 'ANO_LETIVO' igual ao padrão de 2017 ('Ano')
+fluxo_2021.to_parquet('databases/fluxo_2021.parquet')  # salva o dataset em arquivo
+
+
+###
+# Fluxo de 2022
+###
+# Carrega o dataset. Obs.: o arquivo original do download
+# resulta em erro na hora de carregar. Abre o arquivo com aplicativo
+# de planilhas (Excel, Libreoffice Calc, etc.) e salva novamente como CSV
+# sem precisar alterar nada, só abrir e salvar: ajusta o erro automaticamente.
+fluxo_2022 = pd.read_csv('databases/fluxo_2022.csv')
+
+# O arquivo de 2022 também possui alguns registros incongruentes com os
+# bancos de dados, utilizando o mesmo código para limpeza
+fluxo_2022 = fluxo_2022[fluxo_2022.columns.drop(list(fluxo_2022.filter(regex='Unnamed')))]
+
+# Define as features a serem mantidas
+colunas_nao = ['NM_DIRETORIA', 'CD_REDE_ENSINO', 'NM_COMPLETO_ESCOLA', 'CD_DIRETORIA']
+colunas = list(fluxo_2022.columns[fluxo_2022.columns.isin(colunas_nao) == False])
+
+# O banco de dados de 2022 possui duas ocorrências de código identificador
+# errado, dropando aqui:
+indevido = fluxo_2022[(fluxo_2022['CD_TP_IDENTIFICADOR'] == ' PROFESSOR') | (fluxo_2022['CD_TP_IDENTIFICADOR'] == ' PROFESSORA')].index
+fluxo_2022 = fluxo_2022.drop(indevido)
+
+# Filtra para o df final e verifica valores NaN
+fluxo_2022 = fluxo_2022[colunas]
+fluxo_2022.isnull().sum()  # 0, ótimo: sem precisar mexer mais
+fluxo_2022 = fluxo_2022.rename(columns={'ANO_LETIVO': 'Ano'})  # transforma o nome da feature 'ANO_LETIVO' igual ao padrão de 2017 ('Ano')
+fluxo_2022.to_parquet('databases/fluxo_2022.parquet')  # salva o dataset em arquivo
+
+
+###
+# União dos datasets de fluxo todos em um único arquivo
+###
+fluxo = pd.concat([fluxo_2017, fluxo_2018, fluxo_2019,
+                   fluxo_2020, fluxo_2021, fluxo_2022],
+                  ignore_index=True)
+
+# Ajuste dos dtypes das features do dataset
+# Ano, município, código da escola e código de tipo identificador são categorias
+inteiros = ['Ano', 'CD_ESCOLA', 'CD_TP_IDENTIFICADOR']
+categorias = ['Ano', 'NM_MUNICIPIO', 'CD_ESCOLA', 'CD_TP_IDENTIFICADOR']
+fluxo[inteiros] = fluxo[inteiros].astype('int')  # certifica que todos os códigos estão registrados como inteiros
+fluxo[categorias] = fluxo[categorias].astype('category')  # após a verificação acima classifica como 'category'
+
+# As demais features são todas float, necessário alterar ',' por '.'
+# Uso como filtro as features de categorias utilizadas acima
+colunas_float = list(fluxo_2022.columns[fluxo_2022.columns.isin(categorias) == False])
+for col in fluxo[colunas_float].columns:
+    fluxo = fluxo.replace({col: {',': '.'}}, regex=True)
+    fluxo[col] = fluxo[col].astype(float)
+
+# Salvando o banco de dados agrupado para utilização futura
+fluxo.to_parquet('databases/fluxo_completo.parquet')
+
+
+###############################################
+#  BANCOS DE DADOS PRONTOS, CÁLCULO DO IDESP  #
+###############################################
+
+# Se necessário, carrega os bancos de dados já trabalhados anteriormente:
+alunos = pd.read_parquet('databases/alunos_completo.parquet')
+fluxo = pd.read_parquet('databases/fluxo_completo.parquet')
 
 
 # Gráfico do histórico das proficiências de cada cidade ao longo do tempo
