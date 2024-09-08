@@ -1,49 +1,20 @@
 # Importação dos pacotes necessários
+import time  # apenas para que eu possa mensurar eficiência do processamento
 import numpy as np
 import pandas as pd
 %autoindent OFF  # configuração específica da minha IDE (Neovim)
 
 
-"""
-###
-# PROCEDIMENTOS INICIAIS DE IMPORTAÇÃO E LIMPEZA/AJUSTE DOS DATASETS
-#
-###
+###############################################
+#  MANIPULAÇÃO DOS BANCOS DE DADOS DO SARESP  #
+###############################################
 
-saresp_2017 = pd.read_csv('databases/saresp_2017.csv', delimiter=';')
+saresp_2017 = pd.read_csv('databases/saresp_2017.csv', delimiter=',')
 saresp_2018 = pd.read_csv('databases/saresp_2018.csv', delimiter=',')
-saresp_2019 = pd.read_csv('databases/saresp_2019.csv', delimiter=';')
+saresp_2019 = pd.read_csv('databases/saresp_2019.csv', delimiter=',')
 saresp_2021 = pd.read_csv('databases/saresp_2021.csv', delimiter=',')
-saresp_2022 = pd.read_csv('databases/saresp_2022.csv', delimiter=';')
-saresp_2023 = pd.read_csv('databases/saresp_2023.csv', delimiter=';')
-
-# 2018 teve caracteres não identificados, transformando ao padrão
-# com a utilização de máscaras (vetores True/False)
-# Feature 'ds_comp'
-mask_port = saresp_2018['ds_comp'] == 'L?NGUA PORTUGUESA'
-mask_mat = saresp_2018['ds_comp'] == 'MATEM?TICA'
-saresp_2018.loc[mask_port, 'ds_comp'] = 'LINGUA PORTUGUESA'
-saresp_2018.loc[mask_mat, 'ds_comp'] = 'MATEMATICA'
-
-# Feature 'SERIE_ANO'
-mask_em = saresp_2018['SERIE_ANO'] == 'EM-3? s?rie'
-mask_9 = saresp_2018['SERIE_ANO'] == '9? Ano EF'
-mask_5 = saresp_2018['SERIE_ANO'] == '5? Ano EF'
-mask_3 = saresp_2018['SERIE_ANO'] == '3? Ano EF'
-saresp_2018.loc[mask_em, 'SERIE_ANO'] = 'EM-3ª série'
-saresp_2018.loc[mask_9, 'SERIE_ANO'] = '9º Ano EF'
-saresp_2018.loc[mask_5, 'SERIE_ANO'] = '5º Ano EF'
-saresp_2018.loc[mask_3, 'SERIE_ANO'] = '3º Ano EF'
-
-# Eliminando coluna que não aparece em nenhum outro Ano
-saresp_2018.drop('Unnamed: 12', axis=1, inplace=True)
-
-# Algumas colunas possuem nomes divergentes (maiúsculo/minúsculo),
-# deixando todas no mesmo padrão
-saresp_2019.columns = saresp_2018.columns
-saresp_2021.columns = saresp_2018.columns
-saresp_2022.columns = saresp_2018.columns
-saresp_2023.columns = saresp_2018.columns
+saresp_2022 = pd.read_csv('databases/saresp_2022.csv', delimiter=',')
+saresp_2023 = pd.read_csv('databases/saresp_2023.csv', delimiter=',')
 
 # Registro dos Anos de cada dataset para posterior agrupamento
 saresp_2017['Ano'] = '2017'
@@ -53,40 +24,46 @@ saresp_2021['Ano'] = '2021'
 saresp_2022['Ano'] = '2022'
 saresp_2023['Ano'] = '2023'
 
+# 2023 possui uma variável extra (CODRMET), desconsiderada:
+saresp_2023 = saresp_2023.drop('CODRMET', axis=1)
+
+# 2019 possui uma variável extra (CodRMet), desconsiderada:
+saresp_2019 = saresp_2019.drop('CodRMet', axis=1)
+
+# Os datasets não possuem nomenclatura padrão para as features,
+# deixando todas no mesmo padrão
+saresp_2017.columns = saresp_2018.columns
+saresp_2019.columns = saresp_2018.columns
+saresp_2021.columns = saresp_2018.columns
+saresp_2022.columns = saresp_2018.columns
+saresp_2023.columns = saresp_2018.columns
+
+# Salvando cada dataset individual em arquivo
+saresp_2017.to_parquet('databases/saresp_2017.parquet')
+saresp_2018.to_parquet('databases/saresp_2018.parquet')
+saresp_2019.to_parquet('databases/saresp_2019.parquet')
+saresp_2021.to_parquet('databases/saresp_2021.parquet')
+saresp_2022.to_parquet('databases/saresp_2022.parquet')
+saresp_2023.to_parquet('databases/saresp_2023.parquet')
+
 # Agrupando todos os Anos em um único dataset
 saresp_completo = pd.concat([saresp_2017, saresp_2018, saresp_2019,
                              saresp_2021, saresp_2022, saresp_2023],
                             ignore_index=True)
 
-# Feature 'mun' tem um nome equivocado ainda
-mask_mun = saresp_completo['mun'] == 'FLOR?NEA'
-saresp_completo.loc[mask_mun, 'mun'] = 'FLORINIA'
-mask_mun = saresp_completo['mun'] == 'FLORINEA'
-saresp_completo.loc[mask_mun, 'mun'] = 'FLORINIA'
-mask_mun = saresp_completo['mun'] == 'FLORÍNEA'
-saresp_completo.loc[mask_mun, 'mun'] = 'FLORINIA'
-
-# Exclusão das instituições que não sejam estaduais ou municipais
-excluir = ['Particulares & Sesi', 'Rede SESI', 'Escolas Particulares']
-mask_dropar = saresp_completo.NomeDepBol.isin(excluir)
-mask_dropar = saresp_completo.index[mask_dropar]
-saresp = saresp_completo.drop(mask_dropar, axis=0, inplace=True)
-saresp = saresp.reset_index(drop=True)
-
 # Seguindo aqui o padrão descrito em 'Nota tecnica_2019.pdf'
 # disponível na página de IDESP por Escola
 
 # Exclusão das observações em 'ds_comp' == CIÊNCIAS
-mask_ciencias = saresp.ds_comp.isin(['CIÊNCIAS'])
-mask_ciencias = saresp.index[mask_ciencias]
-saresp.drop(mask_ciencias, axis=0, inplace=True)
-saresp = saresp.reset_index(drop=True)
+mask_ciencias = saresp_completo.ds_comp.isin(['CIÊNCIAS'])
+mask_ciencias = saresp_completo.index[mask_ciencias]
+saresp_completo.drop(mask_ciencias, axis=0, inplace=True)
+saresp = saresp_completo.reset_index(drop=True)
 
-# Exclusão também das observações do 2º e 3º Ano EF
-mask_ef = saresp.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF'])
+# Exclusão também das observações do 2º, 3º e 7º Ano EF
+mask_ef = saresp.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
 mask_ef = saresp.index[mask_ef]
 saresp.drop(mask_ef, axis=0, inplace=True)
-saresp = saresp.reset_index(drop=True)
 
 # Ajuste caracteres acentuados > não acentuados
 saresp = saresp.replace({'ds_comp': {'Í': 'I', 'Á': 'A'}}, regex=True)
@@ -95,6 +72,12 @@ saresp = saresp.replace({'periodo': {'Ã': 'A'}}, regex=True)
 # Ajuste feature 'medprof' para float
 saresp = saresp.replace({'medprof': {',': '.'}}, regex=True)
 saresp.medprof = saresp.medprof.astype(float)
+
+# Banco de dados possui algumas observações NaN, dropando essas
+# linhas e reestruturando o índice
+saresp = saresp.dropna()
+saresp = saresp.reset_index(drop=True)
+
 
 ###
 # NÍVEIS DE DESEMPENHO
@@ -215,45 +198,9 @@ mask = (saresp.ds_comp == 'MATEMATICA') & \
         (saresp.medprof >= 400)
 saresp.loc[mask, 'ID'] = 'Avancado'
 
-# Carregando os dados de fluxo dos municípios
-fluxo_2017 = pd.read_csv('databases/fluxo_2017.csv')
-fluxo_2018 = pd.read_csv('databases/fluxo_2018.csv', delimiter=';')
-fluxo_2019 = pd.read_csv('databases/fluxo_2019.csv')
-fluxo_2021 = pd.read_csv('databases/fluxo_2021.csv')
-fluxo_2022 = pd.read_csv('databases/fluxo_2022.csv')
-fluxo_2023 = pd.read_csv('databases/fluxo_2023.csv')
+# Salvando o banco de dados completo para posterior utilização
+saresp.to_parquet('databases/saresp_completo.parquet')
 
-# Ajuste das features
-fluxo_2018.columns = fluxo_2017.columns
-fluxo_2019.columns = fluxo_2017.columns
-fluxo_2021 = fluxo_2021[fluxo_2021.columns.drop(list(fluxo_2021.filter(regex='Unnamed')))]
-fluxo_2021.columns = fluxo_2017.columns
-fluxo_2022 = fluxo_2022[fluxo_2022.columns.drop(list(fluxo_2022.filter(regex='Unnamed')))]
-fluxo_2022.columns = fluxo_2017.columns
-fluxo_2023 = fluxo_2023[fluxo_2023.columns.drop(list(fluxo_2023.filter(regex='Unnamed')))]
-fluxo_2023.columns = fluxo_2017.columns
-
-# União dos fluxos em um só dataset
-fluxo_completo = pd.concat([fluxo_2017, fluxo_2018, fluxo_2019,
-                            fluxo_2021, fluxo_2022, fluxo_2023],
-                           ignore_index=True)
-
-# Substituição da vírula por ponto nas features numéricas
-for col in fluxo_completo.filter(regex='_').drop('NM_MUNICIPIO', axis=1).columns:
-    fluxo_completo = fluxo_completo.replace({col: {',': '.'}}, regex=True)
-
-# Drop de algumas features não fundamentais para o caso
-saresp = saresp.drop(['DEPADM', 'DepBol', 'codRMet', 'codmun', 'cod_per', 'co_comp'], axis=1)
-fluxo = fluxo_completo.drop(['NM_DIRETORIA', 'CD_REDE_ENSINO'], axis=1)
-
-# Salva os datasets já trabalhados
-fluxo.to_csv('databases/fluxo_completo.csv', index_label=False)
-saresp.to_csv('databases/saresp_completo.csv', index_label=False)
-
-
-fluxo = pd.read_csv('databases/fluxo_completo.csv')
-saresp = pd.read_csv('databases/saresp_completo.csv')
-"""
 
 ##############################################
 # MANIPULAÇÃO DOS BANCOS DE DADOS DOS ALUNOS #
@@ -645,37 +592,137 @@ fluxo.to_parquet('databases/fluxo_completo.parquet')
 # Se necessário, carrega os bancos de dados já trabalhados anteriormente:
 alunos = pd.read_parquet('databases/alunos_completo.parquet')
 fluxo = pd.read_parquet('databases/fluxo_completo.parquet')
+saresp = pd.read_parquet('databases/saresp_completo.parquet')
 
-# Cálculo do IDESP de cada série (5o EF, 9o EF, 3o EM) dá-se por...
+alunos = pd.read_parquet('databases/alunos_2017.parquet')
+fluxo = pd.read_parquet('databases/fluxo_2017.parquet')
+saresp = pd.read_parquet('databases/saresp_completo.parquet')
+
+# Se os datasets forem carregados novamente é necessário refazer
+# o ajuste dos dtypes. Ano, município, código da escola e código
+# de tipo identificador são categorias:
+int_fluxo = ['Ano', 'CD_ESCOLA', 'CD_TP_IDENTIFICADOR']
+categ_fluxo = ['Ano', 'NM_MUNICIPIO', 'CD_ESCOLA', 'CD_TP_IDENTIFICADOR']
+fluxo[int_fluxo] = fluxo[int_fluxo].astype('int')  # certifica que todos os códigos estão registrados como inteiros
+fluxo[categ_fluxo] = fluxo[categ_fluxo].astype('category')  # após a verificação acima classifica como 'category'
+
+# O dataset dos alunos todas as features são categorias
+alunos = alunos.astype('category')
+
+# [1] Cálculo do IDESP de cada série (5o EF, 9o EF, 3o EM) dá-se por...
 idesp = indicador_desempenho * indicador_fluxo
 
-# ...onde...
+# [2] ...onde...
 indicador_desempenho = (1 - defasagem/3)*10
 
-# ...e tendo...
+# [3] ...e tendo...
 defasagem = 3*abaixo_basico + 2*basico + adequado
 
-# ...sendo que cada definição (básico, abaixo, adequado) é calculada por
+# [4] ...sendo que cada definição (básico, abaixo, adequado) é calculada por
 abaixo_basico = alunos_abaixo_basico/total_alunos
 basico = alunos_basico/total_alunos
 adequado = alunos_adequado/total_alunos
 
-# Para o cálculo do IDESP utiliza-se o ID da escola em cada etapa da
+# [5] Para o cálculo do IDESP utiliza-se o ID da escola em cada etapa da
 # escolarização, sendo
 id_escola = (nota_portugues + nota_matemática)/2
 
-# Finalmente, o indicador de fluxo é tido como
+# [6] Finalmente, o indicador de fluxo é tido como
 indicador_fluxo = alunos_aprovados / alunos_matriculados
 
-#############################################
-# Então eu tenho que fazer o IDESP para cada um dos anos (2017-2022)
-# se pá dá pra ajeitar uma função pra isso
 
-alunos.groupby(['Ano', 'CD_ESCOLA', 'SERIE']).RENDIMENTO.mean()
-alunos
-teste = pd.merge([alunos, fluxo]]
+##################################################
+#  CÁLCULO DO INDICADOR DE FLUXO DE CADA ESCOLA  #
+##################################################
 
+# Ano em consideração
+periodo = ['2017', '2018', '2019', '2020', '2021', '2022']
+inicio_full = time.time()
+indicador_fluxo = []
+for i in periodo:
+    alunos = pd.read_parquet(f'databases/alunos_{i}.parquet')
+    ano_temp = i
+    escolas = list(alunos['CD_ESCOLA'].unique())
+    inicio = time.time()
+    for esc in escolas:
+        mask_ap = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp) & (alunos['RENDIMENTO'] == 1)
+        mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)
+        ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])
+        indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])
+        print(f'Processada escola {esc} no ano {ano_temp}, com fluxo {ind_fluxo_temp}')
+    fim = time.time()
+    print(f'Tempo para o cálculo do ano de {ano_temp}: {round((fim - inicio)/60, 2)} minutos')
+fim_full = time.time()
+print(f'Tempo para o cálculo de todos os anos: {round((fim_full - inicio_full)/60, 2)} minutos')
+
+
+# Ver se a variável alunos consegue ser enxugada ainda mais,
+# até acho que sim, se manter apenas CD_ESCOLA, Ano e RENDIMENTO
+alunos.columns
+
+if_df = pd.DataFrame(indicador_fluxo, columns={'Ano': 0,
+                                               'CD_ESCOLA': 1,
+                                               'indicador_fluxo': 2})
+
+escolas[0:5]
+
+esc = escolas[0]
+
+alunos_matriculados = alunos[alunos[esc]].sum()
+alunos_aprovados = (alunos[alunos[esc] == escolas[0]].RENDIMENTO == 1).sum()
+
+
+len(alunos[mask_ap])
+len(alunos[mask_tot])
+
+
+escola
+aluno
+
+
+for yr in ano:
+    print(yr)
+
+escolas
+escolas_temp
+alunos[(alunos.CD_ESCOLA == escolas_2017[0]) & (alunos.Ano == ano)]
+
+escolas_temp = list(alunos[alunos.Ano == ano]['CD_ESCOLA'].unique())
+escolas_2017
+
+
+alunos_matriculados = alunos[alunos.CD_ESCOLA == escolas[0]].sum()
+alunos_aprovados = (alunos[alunos.CD_ESCOLA == escolas[0]].RENDIMENTO == 1).sum()
+
+for escola in escolas:
+    print(f'Média escola código {escola}: {saresp[saresp[saresp.periodo == 'GERAL'][escola]].medprof.mean()}')
+
+mask = saresp[saresp.periodo == 'GERAL'].index
+print(f'Média escola código {escolas[0]}: {saresp[saresp[saresp.periodo == 'GERAL'][escolas[0]]].medprof.mean()}')
+
+saresp[saresp[saresp.periodo == 'GERAL'].CODESC == escolas[0]]
+
+saresp.loc[mask][saresp['CODESC'] == escolas[15]].groupby('SERIE_ANO')['medprof'].mean()
+
+saresp.loc[mask][saresp['CODESC'] == escolas[5]][['Ano', 'CODESC', 'SERIE_ANO', 'ds_comp']]
+
+saresp.loc[mask]
+
+id_escola = ()
+
+
+fluxo[fluxo.CD_ESCOLA == 12]
+fluxo
+
+
+saresp[saresp.periodo == 'GERAL']
+
+saresp.head()
+alunos.head()
+fluxo.head()
 
 #
 # Gráfico do histórico das proficiências de cada cidade ao longo do tempo
 # Registrar nível de desempenho
+for ano in alunos.Ano.unique():
+    mask = alunos.Ano == ano
