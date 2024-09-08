@@ -635,34 +635,65 @@ indicador_fluxo = alunos_aprovados / alunos_matriculados
 #  CÁLCULO DO INDICADOR DE FLUXO DE CADA ESCOLA  #
 ##################################################
 
-# Ano em consideração
+# Define os anos de análise
 periodo = ['2017', '2018', '2019', '2020', '2021', '2022']
-inicio_full = time.time()
-indicador_fluxo = []
+inicio_full = time.time()  # início do timer geral, para controle
+indicador_fluxo = []  # cria uma lista em branco para armazenar as informações
 for i in periodo:
-    alunos = pd.read_parquet(f'databases/alunos_{i}.parquet')
+    alunos = pd.read_parquet(f'databases/alunos_{i}.parquet')  # lê individualmente cada um dos anos, para acelerar o processo
     ano_temp = i
-    escolas = list(alunos['CD_ESCOLA'].unique())
-    inicio = time.time()
+    escolas = list(alunos['CD_ESCOLA'].unique())  # cria a relação dos códigos das escolas
+    inicio = time.time()  # início do timer específico para os cálculos do ano considerado
     for esc in escolas:
-        mask_ap = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp) & (alunos['RENDIMENTO'] == 1)
-        mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)
-        ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])
-        indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])
-        print(f'Processada escola {esc} no ano {ano_temp}, com fluxo {ind_fluxo_temp}')
+        mask_ap = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp) & (alunos['RENDIMENTO'] == 1)  # filtra os aprovados
+        mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)  # contabiliza o total de matriculados
+        ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])  # calcula o % de indicador de fluxo
+        indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])  # registra em lista
+        print(f'Processada escola {esc} no ano {ano_temp}, com fluxo {ind_fluxo_temp}')  # imprime na tela o processamento
     fim = time.time()
     print(f'Tempo para o cálculo do ano de {ano_temp}: {round((fim - inicio)/60, 2)} minutos')
 fim_full = time.time()
 print(f'Tempo para o cálculo de todos os anos: {round((fim_full - inicio_full)/60, 2)} minutos')
 
 
+# Define os anos de análise
+indicador_fluxo = []  # cria uma lista em branco para armazenar as informações
+ano_temp = '2017'
+escolas = pd.DataFrame(alunos['CD_ESCOLA'].unique())  # cria a relação dos códigos das escolas
+inicio = time.time()  # início do timer específico para os cálculos do ano considerado
+for esc in escolas[0]:
+    mask_ap = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp) & (alunos['RENDIMENTO'] == 1)  # filtra os aprovados
+    mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)  # contabiliza o total de matriculados
+    ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])  # calcula o % de indicador de fluxo
+    indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])  # registra em lista
+    mask_percent = (escolas[0] == esc)
+    percent = escolas[mask_percent].index
+    print(f'{round((percent[0]/len(escolas))*100, 2)}% concluído. Processada escola {esc} no ano {ano_temp}, com fluxo {round(ind_fluxo_temp, 4)}')
+fim = time.time()
+print(f'Tempo para o cálculo do ano de {ano_temp}: {round((fim - inicio)/60, 2)} minutos')
+
+escolas
+
 # Ver se a variável alunos consegue ser enxugada ainda mais,
 # até acho que sim, se manter apenas CD_ESCOLA, Ano e RENDIMENTO
-alunos.columns
+len(alunos)
 
-if_df = pd.DataFrame(indicador_fluxo, columns={'Ano': 0,
-                                               'CD_ESCOLA': 1,
-                                               'indicador_fluxo': 2})
+esc = 11447
+# OBS2: tenta usar .stack() com o groupby, de repente exibe alguma coisa
+
+(percent.values/len(escolas))*100
+percent[0]
+
+pd.DataFrame(alunos['CD_ESCOLA'].unique())
+
+
+indicador_fluxo
+
+if_df_2017 = pd.DataFrame(indicador_fluxo, columns={'Ano': 0,
+                                                    'CD_ESCOLA': 1,
+                                                    'indicador_fluxo': 2})
+
+if_df_2017.to_parquet('databases/indicador_fluxo_2017.parquet')
 
 escolas[0:5]
 
