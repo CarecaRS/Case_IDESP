@@ -2,6 +2,8 @@
 import time  # apenas para que eu possa mensurar eficiência do processamento
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
+from statsmodels.tsa.ar_model import AutoReg, AutoRegResults
 %autoindent OFF  # configuração específica da minha IDE (Neovim)
 
 
@@ -839,4 +841,41 @@ for i in anos:
 #           MODELO PREDITIVO           #
 ########################################
 
+# Ajusta os dados para modelagem
+modelagem = idesp.unstack().T.dropna()
 
+# Gera o modelo e já faz o fit, imprimindo os resultados no final
+modelo = AutoReg(modelagem['2022'],
+                 1,
+                 trend='c',
+                 exog=modelagem.drop('2022', axis=1))
+resultado = modelo.fit()
+print(resultado.summary())
+saida = resultado.summary()
+
+# Realiza o registro da saída do summary em texto
+texto = open('modeloAR.txt', 'a')
+texto.write(str(saida))
+texto.close()
+
+# Realização da previsão de um período adicional
+previsao = modelo.predict(resultado.params,
+                          exog=modelagem.drop('2017', axis=1))
+previsao.name = 'previsto'
+
+# Ajuste dos índices para posterior concatenação
+previsao.index = modelagem.index
+
+# Criação do objeto contendo os nomes das colunas
+colunas = modelagem.columns.values
+colunas = np.append(colunas, previsao.name)
+
+# Concatenação dos dois datasets (base e previsto), com ajuste
+# das colunas
+completo = pd.concat([modelagem, previsao],
+                     ignore_index=True,
+                     axis=1,
+                     levels=2)
+completo.columns = colunas
+
+print(completo)
