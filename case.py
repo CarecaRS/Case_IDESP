@@ -207,11 +207,13 @@ saresp.to_parquet('databases/saresp_completo.parquet')
 ##############################################
 
 # Definição dos universos de observações possíveis
-serie_possivel = [14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
+serie_possivel = [12, 9, 5]
 rendimento_possivel = [1, 2, 3, 4, 5, 6, 7, 8]
-situacao_possivel = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                     11, 12, 13, 14, 15, 16, 17, 18, 19,
-                     20, 21, 22, 31, 99, 105, 118]
+# situacao_possivel = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+#                     11, 12, 13, 14, 15, 16, 17, 18, 19,
+#                     20, 21, 22, 31, 99, 105, 118]
+situacao_possivel = [0, 2, 5, 16, 17, 18,
+                     20, 21, 105, 118]
 colunas = ['CD_ALUNO', 'CD_ESCOLA', 'RENDIMENTO', 'SERIE', 'FLAG_SIT_ALUNO']
 
 ###
@@ -226,7 +228,7 @@ alunos_2017 = alunos_2017.astype(int)  # transforma as observações para númer
 # Verifica registros inválidos
 (alunos_2017.RENDIMENTO.isin(rendimento_possivel) == False).sum()  # possui registros inválidos
 (alunos_2017.SERIE.isin(serie_possivel) == False).sum()  # possui registros inválidos
-(alunos_2017.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # NÃO possui registros inválidos
+(alunos_2017.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos
 
 # Limpeza das observações inválidas em 'RENDIMENTO'
 mask_rend = alunos_2017.RENDIMENTO.isin(rendimento_possivel) == False
@@ -238,9 +240,15 @@ mask_serie = alunos_2017.SERIE.isin(serie_possivel) == False
 mask_serie = alunos_2017.loc[mask_serie].index
 alunos_2017 = alunos_2017.drop(mask_serie)
 
+# Limpeza das observações inválidas em 'FLAG_SIT_ALUNO'
+mask_situacao = alunos_2017.FLAG_SIT_ALUNO.isin(situacao_possivel) == False
+mask_situacao = alunos_2017.loc[mask_situacao].index
+alunos_2017 = alunos_2017.drop(mask_situacao)
+
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2017['Ano'] = '2017'
 alunos_2017 = alunos_2017.reset_index(drop=True)
+alunos_2017 = alunos_2017.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2017.to_parquet('databases/alunos_2017.parquet')
@@ -258,7 +266,7 @@ alunos_2018 = alunos_2018.astype(int)  # transforma as observações para númer
 # Verifica registros inválidos
 (alunos_2018.RENDIMENTO.isin(rendimento_possivel) == False).sum()  # possui registros inválidos
 (alunos_2018.SERIE.isin(serie_possivel) == False).sum()  # possui registros inválidos
-(alunos_2018.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registro inválido, mas já cai fora na limpeza anterior
+(alunos_2018.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos
 
 # Limpeza das observações ainda inválidas em 'SERIE'
 mask_serie = alunos_2018.SERIE.isin(serie_possivel) == False
@@ -270,9 +278,15 @@ mask_rend = alunos_2018.RENDIMENTO.isin(rendimento_possivel) == False
 mask_rend = alunos_2018.loc[mask_rend].index
 alunos_2018 = alunos_2018.drop(mask_rend)
 
+# Limpeza das observações inválidas em 'FLAG_SIT_ALUNO'
+mask_situacao = alunos_2018.FLAG_SIT_ALUNO.isin(situacao_possivel) == False
+mask_situacao = alunos_2018.loc[mask_situacao].index
+alunos_2018 = alunos_2018.drop(mask_situacao)
+
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2018['Ano'] = '2018'
 alunos_2018 = alunos_2018.reset_index(drop=True)
+alunos_2018 = alunos_2018.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2018.to_parquet('databases/alunos_2018.parquet')
@@ -313,6 +327,7 @@ alunos_2019 = alunos_2019.astype(int)
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2019['Ano'] = '2019'
 alunos_2019 = alunos_2019.reset_index(drop=True)
+alunos_2019 = alunos_2019.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2019.to_parquet('databases/alunos_2019.parquet')
@@ -330,7 +345,7 @@ alunos_2020 = alunos_2020.astype(int)  # transforma as observações para númer
 # Verifica registros inválidos
 (alunos_2020.RENDIMENTO.isin(rendimento_possivel) == False).sum()  # possui registros inválidos
 (alunos_2020.SERIE.isin(serie_possivel) == False).sum()  # possui registros inválidos
-(alunos_2020.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos, mas já cai fora nas limpezas das outras features
+(alunos_2020.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos
 
 # Limpeza das observações ainda inválidas em 'SERIE'
 mask_serie = alunos_2020.SERIE.isin(serie_possivel) == False
@@ -342,9 +357,15 @@ mask_rend = alunos_2020.RENDIMENTO.isin(rendimento_possivel) == False
 mask_rend = alunos_2020.loc[mask_rend].index
 alunos_2020 = alunos_2020.drop(mask_rend)
 
+# Limpeza das observações inválidas em 'FLAG_SIT_ALUNO'
+mask_situacao = alunos_2020.FLAG_SIT_ALUNO.isin(situacao_possivel) == False
+mask_situacao = alunos_2020.loc[mask_situacao].index
+alunos_2020 = alunos_2020.drop(mask_situacao)
+
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2020['Ano'] = '2020'
 alunos_2020 = alunos_2020.reset_index(drop=True)
+alunos_2020 = alunos_2020.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2020.to_parquet('databases/alunos_2020.parquet')
@@ -362,7 +383,7 @@ alunos_2021 = alunos_2021.astype(int)  # transforma as observações para númer
 # Verifica registros inválidos
 (alunos_2021.RENDIMENTO.isin(rendimento_possivel) == False).sum()  # possui registros inválidos
 (alunos_2021.SERIE.isin(serie_possivel) == False).sum()  # possui registros inválidos
-(alunos_2021.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos, mas já cai fora nas limpezas das outras features
+(alunos_2021.FLAG_SIT_ALUNO.isin(situacao_possivel) == False).sum()  # possui registros inválidos
 
 # Limpeza das observações ainda inválidas em 'SERIE'
 mask_serie = alunos_2021.SERIE.isin(serie_possivel) == False
@@ -374,9 +395,15 @@ mask_rend = alunos_2021.RENDIMENTO.isin(rendimento_possivel) == False
 mask_rend = alunos_2021.loc[mask_rend].index
 alunos_2021 = alunos_2021.drop(mask_rend)
 
+# Limpeza das observações inválidas em 'FLAG_SIT_ALUNO'
+mask_situacao = alunos_2021.FLAG_SIT_ALUNO.isin(situacao_possivel) == False
+mask_situacao = alunos_2021.loc[mask_situacao].index
+alunos_2021 = alunos_2021.drop(mask_situacao)
+
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2021['Ano'] = '2021'
 alunos_2021 = alunos_2021.reset_index(drop=True)
+alunos_2021 = alunos_2021.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2021.to_parquet('databases/alunos_2021.parquet')
@@ -409,6 +436,7 @@ alunos_2022 = alunos_2022.drop(mask_rend)
 # Marcação do Ano do dataset e refazimento do índice após a limpeza
 alunos_2022['Ano'] = '2022'
 alunos_2022 = alunos_2022.reset_index(drop=True)
+alunos_2022 = alunos_2022.drop(['CD_ALUNO', 'FLAG_SIT_ALUNO'], axis=1)
 
 # Salva o banco de dados limpo em formato parquet (menor espaço/memória)
 alunos_2022.to_parquet('databases/alunos_2022.parquet')
@@ -580,6 +608,135 @@ for col in fluxo[colunas_float].columns:
 fluxo.to_parquet('databases/fluxo_completo.parquet')
 
 
+##############################################################
+#  MANIPULAÇÃO DOS BANCOS DE DADOS DE MICRODADOS DOS ALUNOS  #
+##############################################################
+
+###
+# MICRODADOS DE 2017
+###
+# Carregamento do banco de dados
+microdados_2017 = pd.read_csv('databases/microdados_2017.csv', sep=';')
+
+# Filtro das features a se manter
+manter = ['CODESC', 'SERIE_ANO', 'nivel_profic_lp', 'nivel_profic_mat']
+microdados_2017 = microdados_2017[manter]
+
+# Exclusão das observações do 2º, 3º e 7º Ano EF
+mask_ef = microdados_2017.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
+mask_ef = microdados_2017.index[mask_ef]
+microdados_2017.drop(mask_ef, axis=0, inplace=True)
+microdados_2017 = microdados_2017.reset_index(drop=True)
+
+# Marcação do ano do dataset
+microdados_2017['Ano'] = '2017'
+
+# Salva o banco de dados ajustado para uso futuro
+microdados_2017.to_parquet('databases/microdados_2017.parquet')
+
+
+###
+# MICRODADOS DE 2018
+###
+# Carregamento do banco de dados
+microdados_2018 = pd.read_csv('databases/microdados_2018.csv', sep=';')
+
+# Filtro das features a se manter
+manter = ['CODESC', 'SERIE_ANO', 'nivel_profic_lp', 'nivel_profic_mat']
+microdados_2018 = microdados_2018[manter]
+
+# Exclusão das observações do 2º, 3º e 7º Ano EF
+mask_ef = microdados_2018.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
+mask_ef = microdados_2018.index[mask_ef]
+microdados_2018.drop(mask_ef, axis=0, inplace=True)
+microdados_2018 = microdados_2018.reset_index(drop=True)
+
+# Marcação do ano do dataset
+microdados_2018['Ano'] = '2018'
+
+# Salva o banco de dados ajustado para uso futuro
+microdados_2018.to_parquet('databases/microdados_2018.parquet')
+
+
+###
+# MICRODADOS DE 2019
+###
+# Carregamento do banco de dados
+microdados_2019 = pd.read_csv('databases/microdados_2019.csv', sep=';')
+
+# Filtro das features a se manter
+manter = ['CODESC', 'SERIE_ANO', 'nivel_profic_lp', 'nivel_profic_mat']
+microdados_2019 = microdados_2019[manter]
+
+# Exclusão das observações do 2º, 3º e 7º Ano EF
+mask_ef = microdados_2019.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
+mask_ef = microdados_2019.index[mask_ef]
+microdados_2019.drop(mask_ef, axis=0, inplace=True)
+microdados_2019 = microdados_2019.reset_index(drop=True)
+
+# Marcação do ano do dataset
+microdados_2019['Ano'] = '2019'
+
+# Salva o banco de dados ajustado para uso futuro
+microdados_2019.to_parquet('databases/microdados_2019.parquet')
+
+
+###
+# MICRODADOS DE 2021
+###
+# Carregamento do banco de dados
+microdados_2021 = pd.read_csv('databases/microdados_2021.csv', sep=';')
+
+# Filtro das features a se manter
+manter = ['CODESC', 'SERIE_ANO', 'nivel_profic_lp', 'nivel_profic_mat']
+microdados_2021 = microdados_2021[manter]
+
+# Exclusão das observações do 2º, 3º e 7º Ano EF
+mask_ef = microdados_2021.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
+mask_ef = microdados_2021.index[mask_ef]
+microdados_2021.drop(mask_ef, axis=0, inplace=True)
+microdados_2021 = microdados_2021.reset_index(drop=True)
+
+# Marcação do ano do dataset
+microdados_2021['Ano'] = '2021'
+
+# Salva o banco de dados ajustado para uso futuro
+microdados_2021.to_parquet('databases/microdados_2021.parquet')
+
+
+###
+# MICRODADOS DE 2022
+###
+# Carregamento do banco de dados
+microdados_2022 = pd.read_csv('databases/microdados_2022.csv', sep=';')
+
+# Filtro das features a se manter
+manter = ['CODESC', 'SERIE_ANO', 'nivel_profic_lp', 'nivel_profic_mat']
+microdados_2022 = microdados_2022[manter]
+
+# Exclusão das observações do 2º, 3º e 7º Ano EF
+mask_ef = microdados_2022.SERIE_ANO.isin(['3º Ano EF', '2º Ano EF', '7º Ano EF'])
+mask_ef = microdados_2022.index[mask_ef]
+microdados_2022.drop(mask_ef, axis=0, inplace=True)
+microdados_2022 = microdados_2022.reset_index(drop=True)
+
+# Marcação do ano do dataset
+microdados_2022['Ano'] = '2022'
+
+# Salva o banco de dados ajustado para uso futuro
+microdados_2022.to_parquet('databases/microdados_2022.parquet')
+
+
+###
+# União dos datasets todos em um único arquivo
+###
+microdados = pd.concat([microdados_2017, microdados_2018, microdados_2019,
+                        microdados_2021, microdados_2022], ignore_index=True)
+
+# Salvando o banco de dados agrupado para utilização futura
+microdados.to_parquet('databases/microdados_completo.parquet')
+
+
 ################################################################################
 #                   BANCOS DE DADOS PRONTOS, CÁLCULO DO IDESP                  #
 #                                                                              #
@@ -593,10 +750,7 @@ fluxo.to_parquet('databases/fluxo_completo.parquet')
 alunos = pd.read_parquet('databases/alunos_completo.parquet')
 fluxo = pd.read_parquet('databases/fluxo_completo.parquet')
 saresp = pd.read_parquet('databases/saresp_completo.parquet')
-
-alunos = pd.read_parquet('databases/alunos_2017.parquet')
-fluxo = pd.read_parquet('databases/fluxo_2017.parquet')
-saresp = pd.read_parquet('databases/saresp_completo.parquet')
+microdados = pd.read_parquet('databases/microdados_completo.parquet')
 
 # Se os datasets forem carregados novamente é necessário refazer
 # o ajuste dos dtypes. Ano, município, código da escola e código
@@ -609,95 +763,205 @@ fluxo[categ_fluxo] = fluxo[categ_fluxo].astype('category')  # após a verificaç
 # O dataset dos alunos todas as features são categorias
 alunos = alunos.astype('category')
 
-# [1] Cálculo do IDESP de cada série (5o EF, 9o EF, 3o EM) dá-se por...
-idesp = indicador_desempenho * indicador_fluxo
-
-# [2] ...onde...
-indicador_desempenho = (1 - defasagem/3)*10
-
-# [3] ...e tendo...
-defasagem = 3*abaixo_basico + 2*basico + adequado
-
-# [4] ...sendo que cada definição (básico, abaixo, adequado) é calculada por
-abaixo_basico = alunos_abaixo_basico/total_alunos
-basico = alunos_basico/total_alunos
-adequado = alunos_adequado/total_alunos
-
-# [5] Para o cálculo do IDESP utiliza-se o ID da escola em cada etapa da
-# escolarização, sendo
-id_escola = (nota_portugues + nota_matemática)/2
-
-# [6] Finalmente, o indicador de fluxo é tido como
-indicador_fluxo = alunos_aprovados / alunos_matriculados
-
-
 ##################################################
 #  CÁLCULO DO INDICADOR DE FLUXO DE CADA ESCOLA  #
 ##################################################
 
-# Define os anos de análise
-periodo = ['2018', '2019', '2020', '2021', '2022']
-inicio_full = time.time()  # início do timer geral, para controle
-indicador_fluxo = []  # cria uma lista em branco para armazenar as informações
-for i in periodo:
-    alunos = pd.read_parquet(f'databases/alunos_{i}.parquet')  # lê individualmente cada um dos anos, para acelerar o processo
-    ano_temp = i
-    escolas = pd.DataFrame(alunos['CD_ESCOLA'].unique())  # cria a relação dos códigos das escolas
-    alunos = alunos.drop(['CD_ALUNO', 'SERIE', 'FLAG_SIT_ALUNO'], axis=1)  # dimensão de dimensionalidade para acelerar o processo
-    inicio = time.time()  # início do timer específico para os cálculos do ano considerado
-    for esc in escolas[0]:
-        mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)  # contabiliza o total dos matriculados
-        mask_ap = mask_tot & (alunos['RENDIMENTO'] == 1)  # filtra os aprovados
-        ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])  # calcula o % de indicador de fluxo
-        indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])  # registra em lista
-        mask_percent = (escolas[0] == esc)
-        percent = escolas[mask_percent].index
-        print(f'{round((percent[0]/len(escolas))*100, 2)}% concluído. Processada escola {esc} no ano {ano_temp}, com fluxo {round(ind_fluxo_temp, 4)}')
-    fim = time.time()
-    print(f'Tempo para o cálculo do ano de {ano_temp}: {round((fim - inicio)/60, 2)} minutos')
-fim_full = time.time()
-print(f'Tempo para o cálculo de todos os anos: {round((fim_full - inicio_full)/60, 2)} minutos')
+# Tratamento através de for-loops apenas por questões de showcase,
+# processo muito demorado para uso em produção neste caso.
+# O processo realizado através de funções groupby (como realizado
+# no processamento das defasagens no bloco abaixo) são muito
+# mais eficientes.
+
+# Registro exclusivo das séries a se considerar no cálculo
+series_utilizadas = [12, 9, 5]
+
+# Limpeza das observações ainda inválidas em 'SERIE'
+mask_serie = alunos.SERIE.isin(series_utilizadas) == False
+mask_serie = alunos.loc[mask_serie].index
+alunos = alunos.drop(mask_serie)
+
+# Ajuste da nomenclatura
+alunos['SERIE'] = alunos['SERIE'].astype('string')
+alunos = alunos.replace({'SERIE': {'12': 'EM-3ª série',
+                                   '9': '9º Ano EF',
+                                   '5': '5º Ano EF'}},
+                        regex=True)
+alunos = alunos.rename(columns={'SERIE': 'SERIE_ANO', 'CD_ESCOLA': 'CODESC'})
+
+# Ajuste do índice para eficiência do cálculo
+temp = alunos.set_index(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .sort_values(by=['Ano', 'CODESC'])
+
+# Computação do total de alunos e da quantidade de alunos aprovados
+alunos_totais = temp.groupby(['Ano', 'CODESC', 'SERIE_ANO'])['RENDIMENTO']\
+        .apply(lambda x: len(x))
+alunos_totais.name = 'total'
+alunos_aprovados = temp.groupby(['Ano', 'CODESC', 'SERIE_ANO'])['RENDIMENTO']\
+        .apply(lambda x: (x == 1).sum())
+alunos_aprovados.name = 'aprovado'
 
 
-# Define os anos de análise
-indicador_fluxo = []  # cria uma lista em branco para armazenar as informações
-ano_temp = '2018'
-escolas = pd.DataFrame(alunos['CD_ESCOLA'].unique())  # cria a relação dos códigos das escolas
-alunos = alunos.drop(['CD_ALUNO', 'SERIE', 'FLAG_SIT_ALUNO'], axis=1)  # dimensão de dimensionalidade para acelerar o processo
-inicio = time.time()  # início do timer específico para os cálculos do ano considerado
-for esc in escolas[0]:
-    mask_ap = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp) & (alunos['RENDIMENTO'] == 1)  # filtra os aprovados
-    mask_tot = (alunos['CD_ESCOLA'] == esc) & (alunos['Ano'] == ano_temp)  # contabiliza o total de matriculados
-    ind_fluxo_temp = len(alunos[mask_ap])/len(alunos[mask_tot])  # calcula o % de indicador de fluxo
-    indicador_fluxo.append([ano_temp, esc, ind_fluxo_temp])  # registra em lista
-    mask_percent = (escolas[0] == esc)
-    percent = escolas[mask_percent].index
-    print(f'{round((percent[0]/len(escolas))*100, 2)}% concluído. Processada escola {esc} no ano {ano_temp}, com fluxo {round(ind_fluxo_temp, 4)}')
-fim = time.time()
-print(f'Tempo para o cálculo do ano de {ano_temp}: {round((fim - inicio)/60, 2)} minutos')
+# União dos objetos acima para cálculo
+relacao_alunos = pd.merge(alunos_aprovados,
+                          alunos_totais,
+                          how='left',
+                          on=['Ano', 'CODESC', 'SERIE_ANO'])
+
+# Cálculo efetivo do indicador de fluxo
+relacao_alunos['indicador_fluxo'] = relacao_alunos['aprovado'] / relacao_alunos['total']
+
+# Ajustando nomenclatura do objeto
+indicador_fluxo = relacao_alunos.copy()
+
+# Salvando o objeto em arquivo para posterior utilização
+indicador_fluxo.to_parquet('databases/indicador_fluxo.parquet')
 
 
-# Ver se a variável alunos consegue ser enxugada ainda mais,
-# até acho que sim, se manter apenas CD_ESCOLA, Ano e RENDIMENTO
-# OBS2: tenta usar .stack() com o groupby, de repente exibe alguma coisa
+##########################################################
+#  CÁLCULO DAS DEFASAGENS POR DISCIPLINA EM CADA ESCOLA  #
+##########################################################
 
-mask_ap.sum()
+# Separa os níveis de proficiência de português e matemática
+temp = microdados.set_index(['Ano', 'CODESC', 'SERIE_ANO']).sort_values(by=['Ano', 'CODESC'])
 
-indicador_fluxo
-
-if_df = pd.DataFrame(indicador_fluxo, columns={'Ano': 0,
-                                               'CD_ESCOLA': 1,
-                                               'indicador_fluxo': 2})
-if_df.to_parquet('databases/indicador_fluxo_2018acima.parquet')
+portugues = temp.groupby(level=[0, 1, 2])['nivel_profic_lp'].value_counts(normalize=True, dropna=False).rename('proporcao').reset_index()
+matematica = temp.groupby(level=[0, 1, 2])['nivel_profic_mat'].value_counts(normalize=True, dropna=False).rename('proporcao').reset_index()
 
 
-escola
-aluno
+# Calcula a proporção de cada um dos níveis...
+# ...para português...
+abaixo_basico_port = portugues[portugues['nivel_profic_lp'] == 'Abaixo do Básico']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('abaixo_basico')
+basico_port = portugues[portugues['nivel_profic_lp'] == 'Básico']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('basico')
+adequado_port = portugues[portugues['nivel_profic_lp'] == 'Adequado']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('adequado')
 
-saresp.head()
-alunos.head()
-fluxo.head()
+# ...e para matemática.
+abaixo_basico_mat = matematica[matematica['nivel_profic_mat'] == 'Abaixo do Básico']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('abaixo_basico')
+basico_mat = matematica[matematica['nivel_profic_mat'] == 'Básico']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('basico')
+adequado_mat = matematica[matematica['nivel_profic_mat'] == 'Adequado']\
+        .groupby(['Ano', 'CODESC', 'SERIE_ANO'])\
+        .apply(lambda x: x['proporcao'])\
+        .rename('adequado')
 
-#
+# União dos objetos para cálculo
+prop_portugues = pd.merge(abaixo_basico_port,
+                          basico_port,
+                          how='right',
+                          on=['Ano', 'CODESC', 'SERIE_ANO'])
+prop_portugues = pd.merge(prop_portugues,
+                          adequado_port,
+                          how='left',
+                          on=['Ano', 'CODESC', 'SERIE_ANO'])
+prop_matematica = pd.merge(abaixo_basico_mat,
+                           basico_mat,
+                           how='right',
+                           on=['Ano', 'CODESC', 'SERIE_ANO'])
+prop_matematica = pd.merge(prop_matematica,
+                           adequado_mat,
+                           how='left',
+                           on=['Ano', 'CODESC', 'SERIE_ANO'])
+
+
+# Observações NaN substituídas por zero
+prop_portugues = prop_portugues.fillna(0)
+prop_matematica = prop_matematica.fillna(0)
+
+# Cálculo das defasagens, de acordo com a página 4 da
+# 'Nota Técnica_2019.pdf', dado por:
+# defasagem = (3 * abaixo do básico) + (2 * básico) + (1 * adequado)
+defasagem_portugues = (3*prop_portugues['abaixo_basico'] +
+                       2*prop_portugues['basico'] +
+                       prop_portugues['adequado'])
+defasagem_portugues.name = 'portugues'
+
+defasagem_matematica = (3*prop_matematica['abaixo_basico'] +
+                        2*prop_matematica['basico'] +
+                        prop_matematica['adequado'])
+defasagem_matematica.name = 'matematica'
+
+# União das defasagens, para posterior armazenamento em arquivo
+defasagens = pd.merge(defasagem_portugues,
+                      defasagem_matematica,
+                      how='left',
+                      on=['Ano', 'CODESC', 'SERIE_ANO'])
+
+# O salvamento em disco propriamente dito
+defasagens.to_parquet('databases/defasagens.parquet')
+
+##########################################################
+#            CÁLCULO DO INDICADOR DE DESEMPENHO          #
+##########################################################
+# O cálculo dos indicadores de desempenho é dado por
+# indicador_desempenho = (1 - defasagem/3)*10
+# (página 5 da 'Nota Técnica_2019.pdf')
+
+# O Indicador de Desempenho (ID) da escola é dado pela média simples
+# entre os desempenhos de português e matemática. Por facilidade,
+# será realizado em um único dataframe.
+
+# Criação do dataframe vazio
+indicador_desempenho = pd.DataFrame()
+
+# Indicador de Matemática
+indicador_desempenho_mat = (1 - defasagem_matematica/3)*10
+indicador_desempenho_mat.name = 'matematica'
+
+# Indicador de Português
+indicador_desempenho_port = (1 - defasagem_portugues/3)*10
+indicador_desempenho_port.name = 'portugues'
+
+# O ID da escola é dado pela média simples entre os dois desempenhos,
+# que por facilidade será realizado em um único dataframe, unindo-se
+# ambos indicadores
+indicador_desempenho = pd.merge(indicador_desempenho_port,
+                                indicador_desempenho_mat,
+                                how='right',
+                                on=['Ano', 'CODESC', 'SERIE_ANO'])
+
+
+indicador_desempenho['ID_escola'] = (indicador_desempenho['portugues'] +
+                                     indicador_desempenho['matematica'])/2
+
+# Salvando sempre o banco de dados em arquivo
+indicador_desempenho.to_parquet('databases/indicador_desempenho.parquet')
+
+#############################################
+#           CÁLCULO FINAL DO IDESP          #
+#############################################
+# Em conformidade com o contido na 'Nota Técnica_2019.pdf', o IDESP
+# é calculado por idesp = indicador_desempenho * indicador_fluxo
+
+# Criação do dataframe com as variáveis necessárias
+calculo_idesp = pd.merge(indicador_desempenho,
+                         indicador_fluxo,
+                         how='right',
+                         on=['Ano', 'CODESC', 'SERIE_ANO'])
+
+# Dropando observações com NaN (impossibilita o cálculo) e também
+# dropando variáveis já utilizadas
+calculo_idesp = calculo_idesp.dropna().drop(['portugues',
+                                             'matematica',
+                                             'aprovado',
+                                             'total'],
+                                            axis=1)
+
+calculo_idesp['idesp'] = calculo_idesp['ID_escola'] * calculo_idesp['indicador_fluxo']
+
+idesp = calculo_idesp['idesp'].unstack()
+
 # Gráfico do histórico das proficiências de cada cidade ao longo do tempo
-# Registrar nível de desempenho
